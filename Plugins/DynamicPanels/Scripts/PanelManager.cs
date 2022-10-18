@@ -21,13 +21,31 @@ namespace DynamicPanels
 			get
 			{
 				if( m_instance == null )
-					m_instance = new GameObject( "PanelManager" ).AddComponent<PanelManager>();
+				{
+                    m_instance = FindObjectOfType<PanelManager>();
+
+
+					if( m_instance != null )
+					{
+						// Awake probably hasn't been called yet.
+						// This ensures that the important setup has been done before the singleton is used.
+                        m_instance.SetupIfNeeded();
+                    }
+					else
+					{
+						m_instance = new GameObject( "PanelManager" ).AddComponent<PanelManager>();
+					}
+                }
 
 				return m_instance;
 			}
 		}
 
-		private List<DynamicPanelsCanvas> canvases = new List<DynamicPanelsCanvas>( 8 );
+        public PanelTab panelTabTemplate;
+        public RectTransform panelPreviewTemplate;
+        public Panel panelTemplate;
+
+        private List<DynamicPanelsCanvas> canvases = new List<DynamicPanelsCanvas>( 8 );
 		private List<Panel> panels = new List<Panel>( 32 );
 
 		private Panel draggedPanel = null;
@@ -39,7 +57,9 @@ namespace DynamicPanels
 		private float nextPanelValidationTime;
 		private PointerEventData nullPointerEventData;
 
-		private void Awake()
+        private bool needsSetup = true;
+
+        private void Awake()
 		{
 			if( m_instance == null )
 				m_instance = this;
@@ -49,7 +69,17 @@ namespace DynamicPanels
 				return;
 			}
 
-			InitializePreviewPanel();
+            SetupIfNeeded();
+        }
+
+        private void SetupIfNeeded()
+		{
+			if( !needsSetup ) return;
+            needsSetup = false;
+
+            LoadTemplates();
+
+            InitializePreviewPanel();
 
 			DontDestroyOnLoad( gameObject );
 			DontDestroyOnLoad( previewPanel.gameObject );
@@ -559,7 +589,7 @@ namespace DynamicPanels
 
 		private void InitializePreviewPanel()
 		{
-			RectTransform previewPanel = Instantiate( Resources.Load<RectTransform>( "DynamicPanelPreview" ) );
+            RectTransform previewPanel = Instantiate<RectTransform>( PanelManager.Instance.panelPreviewTemplate );
 			previewPanel.gameObject.name = "DraggedPanelPreview";
 
 			previewPanel.anchorMin = new Vector2( 0.5f, 0.5f );
@@ -570,5 +600,23 @@ namespace DynamicPanels
 
 			this.previewPanel = previewPanel;
 		}
+	
+		private void LoadTemplates()
+		{
+            if( panelTabTemplate == null )
+			{
+				panelTabTemplate = Resources.Load<PanelTab>("DynamicPanelTab");
+			}
+
+            if( panelPreviewTemplate == null )
+			{
+				panelPreviewTemplate = Resources.Load<RectTransform>("DynamicPanelPreview");
+			}
+
+            if( panelTemplate == null )
+			{
+				panelTemplate = Resources.Load<Panel>("DynamicPanel");
+			}
+        }
 	}
 }

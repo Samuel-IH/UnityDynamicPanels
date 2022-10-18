@@ -455,7 +455,7 @@ namespace DynamicPanels
 				PanelTab tab = PanelUtils.GetAssociatedTab( tabContent );
 				if( !tab )
 				{
-					tab = (PanelTab) Instantiate( Resources.Load<PanelTab>( "DynamicPanelTab" ), tabsParent, false );
+                    tab = Instantiate<PanelTab>( PanelManager.Instance.panelTabTemplate, tabsParent, false );
 					tabs.Insert( tabIndex, tab );
 
 					tabContent.anchorMin = Vector2.zero;
